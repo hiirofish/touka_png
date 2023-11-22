@@ -1,0 +1,54 @@
+import os
+from PIL import Image
+
+# 入力フォルダと出力フォルダを設定
+input_folder = 'input'
+output_folder = 'rename'
+
+# 出力フォルダが存在しない場合、作成
+if not os.path.exists(output_folder):
+    os.makedirs(output_folder)
+
+# 画像ファイルの拡張子リスト
+image_extensions = ['.jpg', '.jpeg', '.png', '.gif']
+
+# 背景色と許容値を設定
+background_color = (0, 0, 0)
+tolerance = 100
+
+# 入力フォルダ内のファイル一覧を取得
+files = os.listdir(input_folder)
+
+for file in files:
+    # ファイルが画像であるか確認
+    ext = os.path.splitext(file)[1].lower()
+    if ext in image_extensions:
+        with Image.open(os.path.join(input_folder, file)) as img:
+            img = img.convert("RGBA")
+            datas = img.getdata()
+
+            new_data = []
+            for item in datas:
+                # 背景色との差を計算
+                diff = sum([abs(item[i] - background_color[i]) for i in range(3)])
+                if diff < tolerance:
+                    new_data.append((255, 255, 255, 0))  # 透過
+                else:
+                    new_data.append(item)
+
+            img.putdata(new_data)
+
+            # 画像をリサイズする
+            img_resized = img.resize((512, 512), Image.LANCZOS)
+
+          # "_out"を含むファイル名を修正
+#            while "_out" in file:
+#                file = file.replace("_out", "")
+
+            # "_out"を含むファイル名を修正
+            if ".jpg_out" in file:
+                file = file.replace(".jpg_out", "")
+
+            # 修正したファイル名で保存
+            new_filename = os.path.join(output_folder, file)
+            img_resized.save(new_filename)
